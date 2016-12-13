@@ -18,8 +18,8 @@ from tkinter import ttk
 class FileTransferGUI:
     def __init__(self, master):
         self.currentTime = time.time()
-        self.src = ''
-        self.dst = ''
+        self.src = StringVar('')
+        self.dst = StringVar('')
     #Styling the master window and the two slave frames
         master.title('File Transfer GUI')
        # master.resizable(True,True)
@@ -29,7 +29,7 @@ class FileTransferGUI:
         self.style.configure('Header.TLabel', font = ('Arial', 20))
 
         self.frame_header = ttk.Frame(master)
-        self.frame_header.pack()
+        self.frame_header.pack(fill = BOTH, expand = 1)
         # Adding pretty pictures (stored in same folder)
         self.header_img = PhotoImage(file = 'fileTransfer.gif')
         self.folder_img = PhotoImage(file = 'folder.gif')
@@ -43,45 +43,54 @@ class FileTransferGUI:
                   text = ("Click on the source and destination buttons below to set directories for file transfer")).grid(row = 1, column = 1)
         #Content
         self.frame_content = ttk.Frame(master)
-        self.frame_content.pack()
-        # Directory choice buttons
-        self.srcButton = ttk.Button(self.frame_content, image = self.src_img, text = 'Source Directory',
-                                    compound = LEFT, command = lambda: cdir(self.src))
-        self.srcButton.grid(row = 0, column = 0)
-        self.dstButton = ttk.Button(self.frame_content, image = self.dst_img, text = 'Destination Directory',
-                                    compound = LEFT, command = lambda: cdir(self.dst))
-        self.dstButton.grid(row = 0, column = 1)
-
-        self.testButton = self.dstButton = ttk.Button(self.frame_content, text = 'Test',
-                                    command = lambda: test(self.src,self.dst))
-        self.testButton.grid(row = 2, column = 0, columnspan = 2)
+        self.frame_content.pack(fill = BOTH, expand = 1) 
         
         #Create a paned window to handle the file browsers
-        self.fileBrowser = ttk.Panedwindow(self.frame_content, orient = HORIZONTAL)
-        self.fileBrowser.grid(row = 1, column = 0, columnspan = 2)
+        self.fileBrowser = ttk.Frame(self.frame_content)
+        self.fileBrowser.grid(row = 1, column = 0, columnspan = 2, sticky = E + W + N + S)
         #Source file viewer
-        self.frame_source = ttk.Frame(self.fileBrowser, height = 800, width = 600, relief = SUNKEN)
-        self.fileBrowser.add(self.frame_source)
+        self.frame_source = ttk.Frame(self.fileBrowser, relief = SUNKEN)
+        self.frame_source.grid(row = 0, column = 0, sticky = E + W + N + S)
         self.src_treeview = ttk.Treeview(self.frame_source)
-        self.src_treeview.pack()
-        #Destination file viewer
-        self.frame_destination = ttk.Frame(self.fileBrowser, height = 800, width = 600, relief = SUNKEN)
-        self.fileBrowser.add(self.frame_destination, weight = 2)
-        self.dst_treeview = ttk.Treeview(self.frame_destination)
-        self.dst_treeview.pack()
-        
+        self.src_treeview.pack(fill = BOTH, expand = 1)
 
-     #This loop creates labels for the content frame based on whether or not the business is open at the time of program run.   
-       # for i in range(0,3):
-        #     ttk.Label(self.frame_content, text = (locations[i].name + ":"),  font = ('Helvetica', 14,'bold') ).grid(row = 0,column = i, padx = 20, sticky = 's')
-         #    if (locations[i].open):
-          #       ttk.Label(self.frame_content, text = "Open", foreground = 'green', font = ('Impact', 20,'bold')).grid(row = 3,column = (i), padx = 20, sticky = 's')
-           #  else:
-            #     ttk.Label(self.frame_content, text = "Closed", foreground = 'red', font = ('Impact', 20,'bold')).grid(row = 3,column = (i), padx = 20, sticky = 's')
-        #ttk.Label(self.frame_content, image = self.portland_img).grid(row = 1, column = 0)
-        #ttk.Label(self.frame_content, image = self.london_img).grid(row = 1, column = 1)
-        #ttk.Label(self.frame_content, image = self.nyc_img).grid(row = 1, column = 2)
-            
+        #Destination file viewer
+        self.frame_destination = ttk.Frame(self.fileBrowser, relief = SUNKEN)
+        self.frame_destination.grid(row = 0, column = 1, sticky = E + W + N + S)
+        self.dst_treeview = ttk.Treeview(self.frame_destination)
+        self.dst_treeview.pack(fill = BOTH, expand = 1)
+
+         # Directory choice buttons
+        self.srcButton = ttk.Button(self.frame_content, image = self.src_img, text = 'Source Directory',
+                                    compound = LEFT, command = lambda: self.src.set(choose(self.src_treeview, self.file_img, self.folder_img)))
+        self.srcButton.grid(row = 0, column = 0)
+        self.dstButton = ttk.Button(self.frame_content, image = self.dst_img, text = 'Destination Directory',
+                                    compound = LEFT, command = lambda: self.dst.set(choose(self.dst_treeview, self.file_img, self.folder_img)))
+        self.dstButton.grid(row = 0, column = 1)
+        self.testButton = self.dstButton = ttk.Button(self.frame_content, text = 'Test',
+                                    command = lambda: genTrees(self.src_treeview, self.src.get(), '', self.file_img, self.folder_img))
+        self.testButton.grid(row = 2, column = 0, columnspan = 2)
+        
+#source chooser
+def choose(src_treeview, file_img, folder_img):
+    src = filedialog.askdirectory()
+    #File Viewing utility:
+    def genTrees(src_treeview, src, parent, file_img, folder_img):
+        i = 0
+        children = os.listdir(src)
+        for child in children:
+            if child.endswith(".git"):
+                continue
+            try:
+                test = os.listdir(src + "/" + child)
+                src_treeview.insert(parent, 'end', parent + str(i), image = folder_img, text = child)
+                genTrees(src_treeview, src + "/" + child,  parent + str(i), file_img, folder_img)
+            except (NotADirectoryError):
+                src_treeview.insert(parent, 'end', parent + str(i), image = file_img, text = child)
+            i += 1
+    genTrees(src_treeview, src, '', file_img, folder_img)
+    return src
+
 #File checking utility:
 def traverse(src, dst, currentTime):
     children = os.listdir(src)
@@ -94,23 +103,11 @@ def traverse(src, dst, currentTime):
         else:
             traverse(src + child + "\\", dst, currentTime)
             
-# File Dialog functionality
-def cdir(directoryName):
-    directoryName = filedialog.askdirectory()
-    return directoryName
-
-def test(src,dst):
-    print(src)
-    print(dst)
-
 # main function execution            
 def main():
     root = Tk()
     fileGUI = FileTransferGUI(root)
     root.mainloop()
-    
-    traverse(src, dst, currentTime)
-    print("File transfer operation complete.")
 
 # module handling
 if __name__ == "__main__": main()
