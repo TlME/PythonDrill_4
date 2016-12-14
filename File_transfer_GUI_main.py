@@ -10,6 +10,7 @@
 # liked to make the GUI update the trees once a file tranfer occurred, but that would have
 # required the creation of a compound function with rather finicky rules on operation.
 # (Unless of course, I created a stand-alone 'refresh' button, but that seemed icky.)
+# ----edit: I did create a refresh button.
 
 # tl;dr - I don't want to spend more time on this to make it better.
 #==============================================================================================
@@ -48,9 +49,8 @@ class FileTransferGUI:
         # Header
         ttk.Label(self.frame_header, image = self.header_img).grid(row = 0, column = 0, rowspan = 2)
         ttk.Label(self.frame_header, text = 'Basic File Transfer GUI', style = 'Header.TLabel').grid(row = 0, column = 1)
-        ttk.Label(self.frame_header, wraplength = 300,
-                  text = ("""Click on the source and destination buttons below to set directories for file transfer. Recently modified items will show up highlighted in green.
-You can also manually choose which files to export by ctrl-clicking them before selecting the 'transfer' button at the bottom.""")).grid(row = 1, column = 1)
+        ttk.Label(self.frame_header, wraplength = 200, justify = CENTER,
+                  text = ("Click on the source and destination buttons below to set directories for file transfer.\nRecently modified items will show up highlighted in green.")).grid(row = 1, column = 1)
         #Content
         self.frame_content = ttk.Frame(master)
         self.frame_content.pack(fill = BOTH, expand = 1) 
@@ -86,30 +86,34 @@ You can also manually choose which files to export by ctrl-clicking them before 
 
          # Directory choice buttons
         self.srcButton = ttk.Button(self.frame_content, image = self.src_img, text = 'Source Directory',
-                                    compound = LEFT, command = lambda: self.src.set(choose(self.src_treeview, self.file_img, self.folder_img, self.currentTime)))
+                                    compound = LEFT, command = lambda: self.src.set(choose(self.src_treeview, self.file_img, self.folder_img, self.currentTime, '')))
         self.srcButton.grid(row = 0, column = 0)
         self.dstButton = ttk.Button(self.frame_content, image = self.dst_img, text = 'Destination Directory',
-                                    compound = LEFT, command = lambda: self.dst.set(choose(self.dst_treeview, self.file_img, self.folder_img, self.currentTime)))
+                                    compound = LEFT, command = lambda: self.dst.set(choose(self.dst_treeview, self.file_img, self.folder_img, self.currentTime, '')))
         self.dstButton.grid(row = 0, column = 1)
         self.transferButton  = ttk.Button(self.frame_content, text = 'Transfer',
                                     command = lambda: transfer(self.src.get(), self.dst.get(), self.currentTime))
-        self.transferButton.grid(row = 2, column = 0, columnspan = 2)
+        self.transferButton.grid(row = 2, column = 0)
         self.refreshButton = ttk.Button(self.frame_content, text = 'Refresh',
-                                    command = lambda: transfer(self.src.get(), self.dst.get(), self.currentTime))
-        
+                                    command = lambda: choose(self.dst_treeview, self.file_img, self.folder_img, self.currentTime, self.dst.get()))
+        self.refreshButton.grid(row = 2, column = 1)
 #====== Choose ============================================================================================
 # @args -
     # src_treeview - the treeview widget that is to have elements appended
     # file_img, folder_img - two .gifs which distinguish files from folders (Must be in same folder as main)
     # currentTime - a time.time() object, used to track how recently something was modified
+    # existingDir - a string which was a previously choosen file-path, to allow for refresh functionality
 # @returns - src : a string that represents the filepath used to reach the chosen directory
 #
 # Usage - allows user to choose a directory to be indexed, drops the current treeview, then populates a new
 #           treeview based off the files and folders contained within the target directory.
 # !!! Will ignore the .git folder !!!
 #===========================================================================================================
-def choose(src_treeview, file_img, folder_img, currentTime):
-    src = filedialog.askdirectory()
+def choose(src_treeview, file_img, folder_img, currentTime, existingDir):
+    if existingDir == '':
+        src = filedialog.askdirectory()
+    else:
+        src = existingDir
     src_treeview.delete(*src_treeview.get_children())
     #File Viewing utility:
     def genTrees(src_treeview, src, parent, file_img, folder_img, currentTime):
