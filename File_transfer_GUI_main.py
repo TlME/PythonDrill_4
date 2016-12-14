@@ -6,7 +6,10 @@
 # Kind of messy implementation here. If I was to be producing this for some goal,
 # I would have spent more time tidying up my code and applying better classical OO principles
 # to the code design. However, this was an exercise to help gain a deeper understanding of
-# the tkinter GUI creating functionality, and I feel like that was accomplished.
+# the tkinter GUI creating functionality, and I feel like that was accomplished. I would have
+# liked to make the GUI update the trees once a file tranfer occurred, but that would have
+# required the creation of a compound function with rather finicky rules on operation.
+# (Unless of course, I created a stand-alone 'refresh' button, but that seemed icky.)
 
 # tl;dr - I don't want to spend more time on this to make it better.
 #==============================================================================================
@@ -152,7 +155,7 @@ def transfer(src, dst, currentTime):
             except (NotADirectoryError):
                 recently_modified = ((currentTime - os.stat(src + "/" + child).st_mtime) <= 86400)
                 if recently_modified:
-                    shutil.move(src + "/" + child, dst) #move normally, copy for now
+                    shutil.copy2(src + "/" + child, dst) #move normally, copy for now
                 else:
                     pass
             
